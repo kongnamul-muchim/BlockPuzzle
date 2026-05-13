@@ -17,7 +17,7 @@ namespace BlockPuzzle.Core.Utilities
         private readonly string _logDirectory;
         private readonly bool _includeTimestamp;
         private IGameStateMachine _stateMachine;
-        private bool _isStarted;
+        private bool _isStarted = true; // 기본 활성화 (메뉴 로그도 캡처)
 
         private static readonly string[] Categories = { "GAME", "INFO", "WARN", "ERROR" };
 
@@ -46,6 +46,9 @@ namespace BlockPuzzle.Core.Utilities
 
             if (!Directory.Exists(logDirectory))
                 Directory.CreateDirectory(logDirectory);
+
+            // 시작부터 로그 캡처 가능하도록 버퍼 초기화
+            InitializeBuffers();
         }
 
         public void SubscribeToGameEvents(IGameStateMachine stateMachine)
@@ -128,13 +131,21 @@ namespace BlockPuzzle.Core.Utilities
         public void StartNewSession()
         {
             _isStarted = true;
+            InitializeBuffers(isNewSession: true);
+        }
+
+        private void InitializeBuffers(bool isNewSession = false)
+        {
+            string sessionLabel = isNewSession
+                ? $"Session: {DateTime.Now:yyyy-MM-dd HH:mm:ss}"
+                : $"Pre-game log (auto-initialized)";
 
             foreach (string cat in Categories)
             {
                 var sb = new StringBuilder();
                 sb.AppendLine($"# {cat} Log");
                 sb.AppendLine();
-                sb.AppendLine($"Session: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                sb.AppendLine(sessionLabel);
                 sb.AppendLine("---");
                 sb.AppendLine();
                 _buffers[cat] = sb;

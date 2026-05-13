@@ -22,6 +22,9 @@ namespace BlockPuzzle.Unity.Adapters
         {
             if (!_logToFile) return;
 
+            // 씬 전환 시 파괴 방지 (모든 씬에서 로그 지속)
+            DontDestroyOnLoad(gameObject);
+
             // 로그 디렉토리 경로 (Unity 의존: Application.dataPath)
             string projectPath = Application.dataPath.Replace("/Assets", "").Replace("\\Assets", "");
             string logDir = System.IO.Path.Combine(projectPath, "progress", _logDirectoryName);
@@ -29,7 +32,7 @@ namespace BlockPuzzle.Unity.Adapters
             // 순수 C# 로거 생성 (디렉토리 기반 → GAME.md, INFO.md, WARN.md, ERROR.md 자동 생성)
             _coreLogger = new Core.Utilities.GameplayLogger(logDir, includeTimestamp: true);
 
-            // 게임 이벤트 연결
+            // 게임 이벤트 연결 (GameManager는 DontDestroyOnLoad라 씬 넘어가도 유지)
             if (GameManager.Container != null)
             {
                 var stateMachine = GameManager.Container.Resolve<IGameStateMachine>();
@@ -45,6 +48,8 @@ namespace BlockPuzzle.Unity.Adapters
 
             // Unity Debug.Log 캡처
             Application.logMessageReceived += OnUnityLog;
+
+            AppendToCategory("GAME", "### Logger initialized\n");
         }
 
         private void OnDestroy()
