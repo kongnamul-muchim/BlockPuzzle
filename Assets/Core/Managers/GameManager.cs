@@ -68,24 +68,20 @@ namespace BlockPuzzle.Core.Managers
         {
             if (_container == null) return;
 
-            if (_container.IsRegistered<IInputProvider>())
-                return;
-
-            _container.RegisterInstance(inputProvider);
-
-            // 입력 이벤트를 StateMachine에 연결
+            // 새 인스턴스의 이벤트는 항상 구독 (씬 재로드 대응)
             inputProvider.OnBlockClicked += (row, col) =>
             {
                 if (_stateMachine != null)
                 {
-                    Debug.Log($"[GameManager] Click relayed: ({row}, {col})");
                     _stateMachine.ProcessClick(row, col);
                 }
-                else
-                {
-                    Debug.LogWarning("[GameManager] Click ignored: StateMachine is null");
-                }
             };
+
+            // 컨테이너 등록은 최초 1회만
+            if (!_container.IsRegistered<IInputProvider>())
+            {
+                _container.RegisterInstance(inputProvider);
+            }
         }
 
         /// <summary>
