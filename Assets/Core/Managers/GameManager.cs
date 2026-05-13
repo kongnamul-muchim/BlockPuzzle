@@ -42,7 +42,7 @@ namespace BlockPuzzle.Core.Managers
             // --- Singleton 서비스 등록 ---
             _container.Register<IDifficultyConfig, DifficultyConfig>(ServiceLifetime.Singleton);
             _container.Register<IScoreManager, ScoreManager>(ServiceLifetime.Singleton);
-            _container.Register<IGrid, Grid>(ServiceLifetime.Singleton);
+            _container.Register<IGrid, global::BlockPuzzle.Core.Game.Grid>(ServiceLifetime.Singleton);
             _container.Register<IChainDetector, ChainDetector>(ServiceLifetime.Singleton);
             _container.Register<IGameStateMachine, GameStateMachine>(ServiceLifetime.Singleton);
 

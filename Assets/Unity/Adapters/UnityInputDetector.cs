@@ -14,11 +14,9 @@ namespace BlockPuzzle.Unity.Adapters
         [Header("References")]
         [SerializeField] private UnityGridRenderer _gridRenderer;
 
-        [Header("Settings")]
-        [SerializeField] private LayerMask _blockLayer = ~0;
-
         private Camera _mainCamera;
         private bool _enabled;
+        private bool _isMobile;
 
         public event Action<int, int> OnBlockClicked;
 
@@ -26,11 +24,15 @@ namespace BlockPuzzle.Unity.Adapters
         {
             _mainCamera = Camera.main;
             _enabled = false;
+            _isMobile = Application.isMobilePlatform;
 
             if (_gridRenderer == null)
                 _gridRenderer = FindAnyObjectByType<UnityGridRenderer>();
+        }
 
-            // GameManager에 IInputProvider로 등록
+        private void Start()
+        {
+            // Start()에서 등록 (Awake 순서 문제 방지)
             GameManager.RegisterInputProvider(this);
         }
 
@@ -38,15 +40,21 @@ namespace BlockPuzzle.Unity.Adapters
         {
             if (!_enabled) return;
 
-            if (Input.GetMouseButtonDown(0))
+            if (_isMobile)
             {
-                HandleClick(Input.mousePosition);
+                // 모바일: 터치만 처리
+                if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+                {
+                    HandleClick(Input.GetTouch(0).position);
+                }
             }
-
-            // 터치 지원
-            if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+            else
             {
-                HandleClick(Input.GetTouch(0).position);
+                // PC/에디터: 마우스만 처리
+                if (Input.GetMouseButtonDown(0))
+                {
+                    HandleClick(Input.mousePosition);
+                }
             }
         }
 

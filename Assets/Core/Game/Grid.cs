@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using BlockPuzzle.Core.Interfaces;
 
 namespace BlockPuzzle.Core.Game
@@ -270,19 +269,6 @@ namespace BlockPuzzle.Core.Game
             RemovalCount = 0;
         }
 
-        /// <summary>
-        /// 게임오버 상태 확인: row 0에 블럭이 있는 경우,
-        /// 다음 AddRowAtBottom 호출 시 게임오버 위험.
-        /// 또는 이미 row 0 위로 블럭이 밀려난 경우.
-        /// </summary>
-        public bool IsAtRiskOfGameOver()
-        {
-            for (int c = 0; c < GRID_COLUMNS; c++)
-            {
-                if (_grid[0, c] != null)
-                    return true;
-            }
-            return false;
-        }
+
     }
 }

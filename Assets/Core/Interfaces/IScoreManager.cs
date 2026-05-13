@@ -29,6 +29,9 @@ namespace BlockPuzzle.Core.Interfaces
         /// <summary>블럭 제거 점수 계산 및 누적</summary>
         ScoreBreakdown CalculateScore(int blockCount, int fallBonus);
 
+        /// <summary>낙차 보너스 계산 (fallDistance × 5)</summary>
+        int CalculateFallBonus(int fallDistance);
+
         /// <summary>점수 초기화 (새 게임)</summary>
         void Reset();
     }

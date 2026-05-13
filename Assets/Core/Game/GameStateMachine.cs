@@ -69,13 +69,13 @@ namespace BlockPuzzle.Core.Game
             int fallBonusTotal = 0;
             foreach (var kvp in fallResult.FallDistances)
             {
-                fallBonusTotal += ScoreManager.CalculateFallBonus(kvp.Value);
+                fallBonusTotal += _scoreManager.CalculateFallBonus(kvp.Value);
             }
             ScoreBreakdown score = _scoreManager.CalculateScore(chain.Count, fallBonusTotal);
             OnScoreChanged?.Invoke(score);
 
-            // 7. 턴 시스템: 3회 제거마다 새 행 추가
-            if (_grid.RemovalCount >= 3)
+            // 7. 턴 시스템: 일정 횟수 제거마다 새 행 추가
+            if (_grid.RemovalCount >= Grid.TURN_RESET_THRESHOLD)
             {
                 _grid.ResetRemovalCount();
                 bool isGameOver = _grid.AddRowAtBottom();

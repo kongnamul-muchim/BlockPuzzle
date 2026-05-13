@@ -1,4 +1,3 @@
-using System;
 using BlockPuzzle.Core.Interfaces;
 
 namespace BlockPuzzle.Core.Game
@@ -69,7 +68,7 @@ namespace BlockPuzzle.Core.Game
         /// <summary>
         /// 낙차 보너스 계산 (fallDistance × 5)
         /// </summary>
-        public static int CalculateFallBonus(int fallDistance)
+        public int CalculateFallBonus(int fallDistance)
         {
             return fallDistance * FALL_BONUS_PER_CELL;
         }

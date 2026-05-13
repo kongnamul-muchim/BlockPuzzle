@@ -45,14 +45,19 @@ namespace BlockPuzzle.Unity.Adapters
 
         public void PlayChainCombo(int comboCount)
         {
-            if (_comboClip != null)
-            {
-                // 연계 수에 따라 피치 변화
-                float pitch = 1f + (comboCount - 2) * 0.1f;
-                _audioSource.pitch = Mathf.Clamp(pitch, 0.8f, 2f);
-                _audioSource.PlayOneShot(_comboClip, _masterVolume);
-                _audioSource.pitch = 1f;
-            }
+            if (_comboClip == null) return;
+
+            float pitch = 1f + (comboCount - 2) * 0.1f;
+            pitch = Mathf.Clamp(pitch, 0.8f, 2f);
+
+            // 별도 AudioSource로 재생 (메인 AudioSource 피치 영향 방지)
+            GameObject tempGo = new GameObject("ComboAudio");
+            tempGo.transform.SetParent(transform);
+            AudioSource tempSource = tempGo.AddComponent<AudioSource>();
+            tempSource.pitch = pitch;
+            tempSource.volume = _masterVolume;
+            tempSource.PlayOneShot(_comboClip);
+            Destroy(tempGo, _comboClip.length + 0.1f);
         }
 
         public void PlayGameOver()

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using BlockPuzzle.Core.Game;
 
 namespace BlockPuzzle.Core.Interfaces
 {

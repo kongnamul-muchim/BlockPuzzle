@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using BlockPuzzle.Core.Interfaces;
 using BlockPuzzle.Core.Managers;
 using UnityEngine;
@@ -25,6 +26,7 @@ namespace BlockPuzzle.Unity.UI
         private IGameStateMachine _stateMachine;
         private IScoreManager _scoreManager;
         private IDifficultyConfig _config;
+        private IGrid _grid;
 
         private const int MAX_REMOVALS = 3;
 
@@ -35,12 +37,14 @@ namespace BlockPuzzle.Unity.UI
                 _stateMachine = GameManager.Container.Resolve<IGameStateMachine>();
                 _scoreManager = GameManager.Container.Resolve<IScoreManager>();
                 _config = GameManager.Container.Resolve<IDifficultyConfig>();
+                _grid = GameManager.Container.Resolve<IGrid>();
             }
 
             if (_stateMachine != null)
             {
                 _stateMachine.OnStateChanged += OnStateChanged;
                 _stateMachine.OnScoreChanged += OnScoreChanged;
+                _stateMachine.OnBlocksRemoved += OnBlocksRemoved;
                 _stateMachine.OnRowAdded += OnRowAdded;
             }
 
@@ -53,8 +57,14 @@ namespace BlockPuzzle.Unity.UI
             {
                 _stateMachine.OnStateChanged -= OnStateChanged;
                 _stateMachine.OnScoreChanged -= OnScoreChanged;
+                _stateMachine.OnBlocksRemoved -= OnBlocksRemoved;
                 _stateMachine.OnRowAdded -= OnRowAdded;
             }
+        }
+
+        private void OnBlocksRemoved(IReadOnlyList<IBlock> _)
+        {
+            UpdateRemovalCount();
         }
 
         private void OnStateChanged(GameState state)
@@ -104,16 +114,9 @@ namespace BlockPuzzle.Unity.UI
 
         private void UpdateRemovalCount()
         {
-            if (_removalCountText != null && _stateMachine != null)
+            if (_removalCountText != null && _grid != null)
             {
-                // IGrid의 RemovalCount는 GameStateMachine을 통해 접근
-                // (간접적으로 Grid 참조)
-                int current = 0;
-                if (GameManager.Container != null && GameManager.Container.IsRegistered<IGrid>())
-                {
-                    var grid = GameManager.Container.Resolve<IGrid>();
-                    current = grid.RemovalCount;
-                }
+                int current = _grid.RemovalCount;
                 _removalCountText.text = string.Format(_removalFormat, MAX_REMOVALS - current, MAX_REMOVALS);
             }
         }
