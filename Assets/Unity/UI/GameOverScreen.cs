@@ -40,6 +40,8 @@ namespace BlockPuzzle.Unity.UI
                     _leaderboardService = GameManager.Container.Resolve<ILeaderboardService>();
             }
 
+            Debug.Log($"[GameOverScreen] Awake: _stateMachine={(_stateMachine != null ? "OK" : "NULL")}, state={_stateMachine?.CurrentState}");
+
             if (_stateMachine != null)
             {
                 _stateMachine.OnStateChanged += OnStateChanged;
@@ -69,8 +71,6 @@ namespace BlockPuzzle.Unity.UI
             // 저장된 이름 불러오기
             if (_nameInput != null)
                 _nameInput.text = PlayerPrefs.GetString("PlayerName", "");
-
-            SetActive(false);
         }
 
         private void OnDestroy()
@@ -84,11 +84,13 @@ namespace BlockPuzzle.Unity.UI
 
         private void OnStateChanged(GameState state)
         {
+            Debug.Log($"[GameOverScreen] OnStateChanged: {state}");
             SetActive(state == GameState.GameOver);
         }
 
         private void OnGameOver(GameOverData data)
         {
+            Debug.Log($"[GameOverScreen] OnGameOver called. Score={data.FinalScore}");
             UpdateStats(data);
 
             if (_saveStatusText != null)
