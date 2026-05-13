@@ -5,11 +5,6 @@ using UnityEngine;
 
 namespace BlockPuzzle.Unity.Adapters
 {
-    /// <summary>
-    /// Unity 전용 GameplayLogger 어댑터.
-    /// 하는 일: 1) Core 로거 생성 2) Debug.Log 캡처 연결 3) 씬 라이프사이클 관리
-    /// 코어 로직은 전부 Core/Utilities/GameplayLogger.cs (순수 C#).
-    /// </summary>
     public class GameplayLogger : MonoBehaviour
     {
         [Header("Settings")]
@@ -17,37 +12,56 @@ namespace BlockPuzzle.Unity.Adapters
         [SerializeField] private string _logDirectoryName = "logs";
 
         private Core.Utilities.GameplayLogger _coreLogger;
+        private IGameStateMachine _stateMachine;
 
         private void Awake()
         {
             if (!_logToFile) return;
 
+            // 씬 재로드 시 중복 방지
+            var existing = FindAnyObjectByType<GameplayLogger>();
+            if (existing != null && existing != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
             // 씬 전환 시 파괴 방지 (모든 씬에서 로그 지속)
             DontDestroyOnLoad(gameObject);
 
-            // 로그 디렉토리 경로 (Unity 의존: Application.dataPath)
             string projectPath = Application.dataPath.Replace("/Assets", "").Replace("\\Assets", "");
             string logDir = System.IO.Path.Combine(projectPath, "progress", _logDirectoryName);
 
-            // 순수 C# 로거 생성 (디렉토리 기반 → GAME.md, INFO.md, WARN.md, ERROR.md 자동 생성)
             _coreLogger = new Core.Utilities.GameplayLogger(logDir, includeTimestamp: true);
 
-            // 게임 이벤트 연결 (GameManager는 DontDestroyOnLoad라 씬 넘어가도 유지)
+            Application.logMessageReceived += OnUnityLog;
+
+            TryResolveDependencies();
+        }
+
+        private void Start()
+        {
+            if (_stateMachine == null)
+                TryResolveDependencies();
+        }
+
+        private void TryResolveDependencies()
+        {
             if (GameManager.Container != null)
             {
-                var stateMachine = GameManager.Container.Resolve<IGameStateMachine>();
-                _coreLogger.SubscribeToGameEvents(stateMachine);
-
-                // 씬 전환 후 로드: 이미 Playing 상태면 세션 시작
-                if (stateMachine.CurrentState == GameState.Playing)
-                {
-                    _coreLogger.StartNewSession();
-                    _coreLogger.AppendToCategory("GAME", "### Scene loaded (mid-game)\n");
-                }
+                _stateMachine = GameManager.Container.Resolve<IGameStateMachine>();
             }
 
-            // Unity Debug.Log 캡처
-            Application.logMessageReceived += OnUnityLog;
+            if (_stateMachine == null)
+                return;
+
+            _coreLogger.SubscribeToGameEvents(_stateMachine);
+
+            if (_stateMachine.CurrentState == GameState.Playing)
+            {
+                _coreLogger.StartNewSession();
+                _coreLogger.AppendToCategory("GAME", "### Scene loaded (mid-game)\n");
+            }
 
             _coreLogger.AppendToCategory("GAME", "### Logger initialized\n");
         }
@@ -79,9 +93,6 @@ namespace BlockPuzzle.Unity.Adapters
             _coreLogger.LogExternal(logString, stackTrace, logType);
         }
 
-        /// <summary>
-        /// 특정 카테고리의 전체 로그 내용 반환.
-        /// </summary>
         public string GetLog(string category = "GAME")
         {
             return _coreLogger?.GetLog(category) ?? "";

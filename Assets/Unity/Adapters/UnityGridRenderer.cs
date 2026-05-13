@@ -6,10 +6,6 @@ using UnityEngine;
 
 namespace BlockPuzzle.Unity.Adapters
 {
-    /// <summary>
-    /// Core Grid의 시각적 표현을 관리.
-    /// 블럭 GameObject 풀링, 위치 동기화, 애니메이션 트리거.
-    /// </summary>
     public class UnityGridRenderer : MonoBehaviour
     {
         [Header("Grid Layout")]
@@ -28,7 +24,17 @@ namespace BlockPuzzle.Unity.Adapters
 
         private void Awake()
         {
-            // DI 컨테이너에서 서비스 해결
+            TryResolveDependencies();
+        }
+
+        private void Start()
+        {
+            if (_stateMachine == null || _grid == null)
+                TryResolveDependencies();
+        }
+
+        private void TryResolveDependencies()
+        {
             if (GameManager.Container != null)
             {
                 _grid = GameManager.Container.Resolve<IGrid>();
@@ -41,16 +47,13 @@ namespace BlockPuzzle.Unity.Adapters
                 return;
             }
 
-            _blockRenderers = new UnityBlockRenderer[_grid.Rows, _grid.Columns];
+            if (_blockRenderers == null)
+                _blockRenderers = new UnityBlockRenderer[_grid.Rows, _grid.Columns];
 
-            // 이벤트 구독
             SubscribeToEvents();
 
-            // 씬 전환 후 로드: 이미 Playing 상태면 바로 렌더링
             if (_stateMachine.CurrentState == GameState.Playing)
-            {
                 RebuildAllBlocks();
-            }
         }
 
         private void SubscribeToEvents()
@@ -83,7 +86,6 @@ namespace BlockPuzzle.Unity.Adapters
                     break;
 
                 case GameState.GameOver:
-                    // 게임오버 연출 (추후 구현)
                     break;
 
                 case GameState.MainMenu:
@@ -92,9 +94,6 @@ namespace BlockPuzzle.Unity.Adapters
             }
         }
 
-        /// <summary>
-        /// Core Grid의 현재 상태를 읽어 모든 블럭 시각화 재구축.
-        /// </summary>
         private void RebuildAllBlocks()
         {
             ClearAllBlocks();
@@ -107,9 +106,6 @@ namespace BlockPuzzle.Unity.Adapters
             }
         }
 
-        /// <summary>
-        /// Core Block 데이터로 새로운 블럭 GameObject 생성.
-        /// </summary>
         private UnityBlockRenderer CreateBlockRenderer(IBlock block)
         {
             if (_blockPrefab == null)
@@ -124,7 +120,6 @@ namespace BlockPuzzle.Unity.Adapters
             Color tint = UnityBlockRenderer.GetColorForBlockColor(block.Color);
             renderer.Initialize(block, _blockSprite, tint);
 
-            // 월드 좌표 계산
             Vector3 worldPos = GridToWorldPosition(block.Row, block.Column);
             renderer.transform.localPosition = worldPos;
             renderer.transform.localScale = Vector3.one;
@@ -133,9 +128,6 @@ namespace BlockPuzzle.Unity.Adapters
             return renderer;
         }
 
-        /// <summary>
-        /// 격자 좌표 → 월드 좌표 변환.
-        /// </summary>
         private Vector3 GridToWorldPosition(int row, int column)
         {
             float x = _gridOrigin.x + column * _cellSize;
@@ -143,9 +135,6 @@ namespace BlockPuzzle.Unity.Adapters
             return new Vector3(x, y, 0);
         }
 
-        /// <summary>
-        /// 월드 좌표 → 격자 좌표 변환.
-        /// </summary>
         public Vector2Int WorldToGridPosition(Vector3 worldPos)
         {
             float col = (worldPos.x - _gridOrigin.x) / _cellSize;
@@ -170,9 +159,6 @@ namespace BlockPuzzle.Unity.Adapters
             }
         }
 
-        /// <summary>
-        /// 블럭 제거 시 시각 업데이트.
-        /// </summary>
         private void OnBlocksRemoved(IReadOnlyList<IBlock> removedBlocks)
         {
             foreach (IBlock block in removedBlocks)
@@ -186,41 +172,24 @@ namespace BlockPuzzle.Unity.Adapters
             }
         }
 
-        /// <summary>
-        /// 중력 적용 후 모든 블럭 위치 재동기화.
-        /// </summary>
         private void OnGravityApplied(RemovalResult result)
         {
-            // 전체 블럭 위치 재동기화
             SyncAllBlockPositions();
         }
 
-        /// <summary>
-        /// 열 이동 후 전체 블럭 위치 재동기화.
-        /// </summary>
         private void OnColumnsShifted()
         {
-            // Grid가 변경됐으므로 전체 재구축
             RebuildAllBlocks();
         }
 
-        /// <summary>
-        /// 새 행 추가 후 전체 블럭 위치 재동기화.
-        /// </summary>
         private void OnRowAdded()
         {
             RebuildAllBlocks();
         }
 
-        /// <summary>
-        /// Core Grid의 모든 블럭 위치를 Renderer에 동기화.
-        /// </summary>
         private void SyncAllBlockPositions()
         {
-            // 기존 렌더러 모두 제거
             ClearAllBlocks();
-
-            // Grid 데이터 기반으로 재생성
             RebuildAllBlocks();
         }
 
@@ -231,9 +200,6 @@ namespace BlockPuzzle.Unity.Adapters
             return _blockRenderers[row, col];
         }
 
-        /// <summary>
-        /// 디버그용: Grid 시작점 기즈모
-        /// </summary>
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.green;

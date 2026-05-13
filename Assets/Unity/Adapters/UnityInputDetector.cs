@@ -8,10 +8,6 @@ using UnityEngine.InputSystem.EnhancedTouch;
 
 namespace BlockPuzzle.Unity.Adapters
 {
-    /// <summary>
-    /// 마우스/터치 입력을 감지하여 Core에 전달.
-    /// Input System 패키지 기반. IInputProvider 구현체.
-    /// </summary>
     public class UnityInputDetector : MonoBehaviour, IInputProvider
     {
         [Header("References")]
@@ -36,29 +32,29 @@ namespace BlockPuzzle.Unity.Adapters
             if (_isMobile)
                 EnhancedTouchSupport.Enable();
 
-            // 상태 머신 구독
-            if (GameManager.Container != null)
-            {
-                _stateMachine = GameManager.Container.Resolve<IGameStateMachine>();
-                _stateMachine.OnStateChanged += OnGameStateChanged;
-
-                if (_stateMachine.CurrentState == GameState.Playing)
-                    _enabled = true;
-            }
+            TryResolveDependencies();
         }
 
         private void Start()
         {
             GameManager.RegisterInputProvider(this);
 
-            // GameManager.Awake가 InputDetector.Awake보다 늦게 실행된 경우
-            // 여기서 다시 시도 (Start는 모든 Awake 이후에 실행됨)
-            if (_stateMachine == null && GameManager.Container != null)
+            if (_stateMachine == null)
+                TryResolveDependencies();
+        }
+
+        private void TryResolveDependencies()
+        {
+            if (GameManager.Container != null)
             {
                 _stateMachine = GameManager.Container.Resolve<IGameStateMachine>();
-                _stateMachine.OnStateChanged += OnGameStateChanged;
-                _enabled = (_stateMachine.CurrentState == GameState.Playing);
             }
+
+            if (_stateMachine == null)
+                return;
+
+            _stateMachine.OnStateChanged += OnGameStateChanged;
+            _enabled = (_stateMachine.CurrentState == GameState.Playing);
         }
 
         private void OnDestroy()
@@ -117,7 +113,7 @@ namespace BlockPuzzle.Unity.Adapters
 
         private void HandleClick(Vector2 screenPos)
         {
-            Vector3 worldPos = _mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 0));
+            Vector3 worldPos = _mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -_mainCamera.transform.position.z));
             Debug.Log($"[Input] Screen→World: ({worldPos.x:F2}, {worldPos.y:F2})");
 
             if (_gridRenderer != null)

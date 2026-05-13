@@ -30,37 +30,35 @@ namespace BlockPuzzle.Unity.Adapters
         /// <summary>
         /// Core 블럭 데이터 기준으로 초기화.
         /// </summary>
-        public void Initialize(IBlock blockData, Sprite blockSprite, Color tint)
+        public void Initialize(IBlock blockData, Sprite blockSprite, Color tint, Vector2 gridOrigin, float cellSize)
         {
             _blockData = blockData;
             _spriteRenderer.sprite = blockSprite;
             _spriteRenderer.color = tint;
             _spriteRenderer.sortingOrder = 1;
 
-            UpdateWorldPosition();
+            UpdateWorldPosition(gridOrigin, cellSize);
         }
 
         /// <summary>
         /// 현재 격자 위치를 월드 좌표로 변환하여 배치.
         /// </summary>
-        public void UpdateWorldPosition()
+        public void UpdateWorldPosition(Vector2 gridOrigin, float cellSize)
         {
             if (_blockData == null) return;
 
-            // GridRenderer가 설정한 오프셋 기반 위치 계산
-            // 실제 좌표는 UnityGridRenderer가 GridOrigin을 통해 관리
-            float x = _blockData.Column;
-            float y = -_blockData.Row; // Y축 반전 (위가 +, 아래가 -)
+            float x = gridOrigin.x + _blockData.Column * cellSize;
+            float y = gridOrigin.y - _blockData.Row * cellSize;
             transform.localPosition = new Vector3(x, y, 0);
         }
 
         /// <summary>
         /// 블럭 데이터 동기화 (Grid가 블럭을 이동시킨 후 호출).
         /// </summary>
-        public void SyncPosition(int row, int column)
+        public void SyncPosition(int row, int column, Vector2 gridOrigin, float cellSize)
         {
             _blockData?.MoveTo(row, column);
-            UpdateWorldPosition();
+            UpdateWorldPosition(gridOrigin, cellSize);
         }
 
         /// <summary>

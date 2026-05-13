@@ -6,9 +6,6 @@ using UnityEngine.UI;
 
 namespace BlockPuzzle.Unity.UI
 {
-    /// <summary>
-    /// 게임 플레이 중 HUD (점수, 연계, 남은 제거 횟수, 난이도).
-    /// </summary>
     public class GameHUD : MonoBehaviour
     {
         [Header("UI References")]
@@ -32,6 +29,17 @@ namespace BlockPuzzle.Unity.UI
 
         private void Awake()
         {
+            TryResolveDependencies();
+        }
+
+        private void Start()
+        {
+            if (_stateMachine == null)
+                TryResolveDependencies();
+        }
+
+        private void TryResolveDependencies()
+        {
             if (GameManager.Container != null)
             {
                 _stateMachine = GameManager.Container.Resolve<IGameStateMachine>();
@@ -40,16 +48,15 @@ namespace BlockPuzzle.Unity.UI
                 _grid = GameManager.Container.Resolve<IGrid>();
             }
 
-            if (_stateMachine != null)
-            {
-                _stateMachine.OnStateChanged += OnStateChanged;
-                _stateMachine.OnScoreChanged += OnScoreChanged;
-                _stateMachine.OnBlocksRemoved += OnBlocksRemoved;
-                _stateMachine.OnRowAdded += OnRowAdded;
-            }
+            if (_stateMachine == null)
+                return;
 
-            // 씬 전환 후 로드: 이미 Playing 상태면 바로 활성화
-            if (_stateMachine != null && _stateMachine.CurrentState == GameState.Playing)
+            _stateMachine.OnStateChanged += OnStateChanged;
+            _stateMachine.OnScoreChanged += OnScoreChanged;
+            _stateMachine.OnBlocksRemoved += OnBlocksRemoved;
+            _stateMachine.OnRowAdded += OnRowAdded;
+
+            if (_stateMachine.CurrentState == GameState.Playing)
             {
                 SetActive(true);
                 UpdateAll();

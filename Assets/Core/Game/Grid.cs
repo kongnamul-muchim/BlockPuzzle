@@ -97,6 +97,10 @@ namespace BlockPuzzle.Core.Game
                             _grid[r, c].MoveTo(newRow, c);
                             _grid[newRow, c] = _grid[r, c];
                         }
+                        else
+                        {
+                            _grid[r, c].State = BlockState.Removed;
+                        }
                         _grid[r, c] = null;
                     }
                 }
@@ -177,6 +181,18 @@ namespace BlockPuzzle.Core.Game
                     }
 
                     writeRow--;
+                }
+            }
+
+            for (int r = 0; r < GRID_ROWS; r++)
+            {
+                for (int c = 0; c < GRID_COLUMNS; c++)
+                {
+                    var block = _grid[r, c];
+                    if (block != null && block.State == BlockState.Falling)
+                    {
+                        block.State = BlockState.Normal;
+                    }
                 }
             }
 

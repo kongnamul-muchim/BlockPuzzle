@@ -39,7 +39,7 @@ namespace BlockPuzzle.Core.Game
                 var (r, c) = queue.Dequeue();
                 IBlock current = _grid.GetBlockAt(r, c);
 
-                if (current == null || current.State == BlockState.Removed)
+                if (current == null || current.State == BlockState.Removed || current.State == BlockState.Falling)
                     continue;
 
                 if (current.Color != targetColor)
