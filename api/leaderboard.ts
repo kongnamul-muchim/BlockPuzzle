@@ -1,7 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
-const prisma = new PrismaClient();
+// 서버리스 환경을 위한 Prisma 싱글톤 패턴
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+const prisma = globalForPrisma.prisma ?? new PrismaClient();
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 /**
  * GET /api/leaderboard?difficulty=Easy&limit=100
@@ -26,9 +31,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       default:
         return res.status(405).json({ error: 'Method not allowed' });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Leaderboard API error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({
+      error: 'Internal server error',
+      message: error?.message || String(error),
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+    });
   } finally {
     await prisma.$disconnect();
   }
