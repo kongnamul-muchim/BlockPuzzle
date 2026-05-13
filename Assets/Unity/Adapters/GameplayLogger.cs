@@ -14,7 +14,7 @@ namespace BlockPuzzle.Unity.Adapters
     {
         [Header("Settings")]
         [SerializeField] private bool _logToFile = true;
-        [SerializeField] private string _fileName = "gameplay-log.txt";
+        [SerializeField] private string _logDirectoryName = "logs";
 
         private Core.Utilities.GameplayLogger _coreLogger;
 
@@ -22,12 +22,12 @@ namespace BlockPuzzle.Unity.Adapters
         {
             if (!_logToFile) return;
 
-            // 파일 경로 (Unity 의존)
+            // 로그 디렉토리 경로 (Unity 의존: Application.dataPath)
             string projectPath = Application.dataPath.Replace("/Assets", "").Replace("\\Assets", "");
-            string filePath = System.IO.Path.Combine(projectPath, "progress", _fileName);
+            string logDir = System.IO.Path.Combine(projectPath, "progress", _logDirectoryName);
 
-            // 순수 C# 로거 생성
-            _coreLogger = new Core.Utilities.GameplayLogger(filePath, includeTimestamp: true);
+            // 순수 C# 로거 생성 (디렉토리 기반 → GAME.md, INFO.md, WARN.md, ERROR.md 자동 생성)
+            _coreLogger = new Core.Utilities.GameplayLogger(logDir, includeTimestamp: true);
 
             // 게임 이벤트 연결
             if (GameManager.Container != null)
@@ -35,11 +35,11 @@ namespace BlockPuzzle.Unity.Adapters
                 var stateMachine = GameManager.Container.Resolve<IGameStateMachine>();
                 _coreLogger.SubscribeToGameEvents(stateMachine);
 
-                // ★ 씬 전환 후 로드된 경우: 이미 Playing 상태일 수 있음
+                // 씬 전환 후 로드: 이미 Playing 상태면 세션 시작
                 if (stateMachine.CurrentState == GameState.Playing)
                 {
                     _coreLogger.StartNewSession();
-                    _coreLogger.AppendLog("[Game] Scene loaded mid-game");
+                    _coreLogger.AppendToCategory("GAME", "### Scene loaded (mid-game)\n");
                 }
             }
 
@@ -64,22 +64,22 @@ namespace BlockPuzzle.Unity.Adapters
 
             string logType = type switch
             {
-                LogType.Error => "Error",
-                LogType.Assert => "Assert",
-                LogType.Warning => "Warning",
+                LogType.Error     => "Error",
+                LogType.Assert    => "Assert",
+                LogType.Warning   => "Warning",
                 LogType.Exception => "Exception",
-                _ => "Log"
+                _                 => "Log"
             };
 
             _coreLogger.LogExternal(logString, stackTrace, logType);
         }
 
         /// <summary>
-        /// 현재까지의 전체 로그 반환.
+        /// 특정 카테고리의 전체 로그 내용 반환.
         /// </summary>
-        public string GetFullLog()
+        public string GetLog(string category = "GAME")
         {
-            return _coreLogger?.FullLog ?? "";
+            return _coreLogger?.GetLog(category) ?? "";
         }
     }
 }

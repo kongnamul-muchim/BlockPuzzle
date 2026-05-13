@@ -8,49 +8,46 @@ namespace BlockPuzzle.Core.Utilities
 {
     /// <summary>
     /// 순수 C# 게임플레이 로거.
-    /// 콘솔 로그 제외한 모든 게임 이벤트(점수/제거/턴/게임오버) 기록.
+    /// 태그별(GAME/INFO/WARN/ERROR) 마크다운 파일로 분산 기록.
     /// 파일 I/O 전부 순수 C#으로 처리.
     /// </summary>
     public class GameplayLogger
     {
-        private readonly StringBuilder _logBuffer = new();
-        private readonly string _filePath;
+        private readonly Dictionary<string, StringBuilder> _buffers = new();
+        private readonly string _logDirectory;
         private readonly bool _includeTimestamp;
         private IGameStateMachine _stateMachine;
         private bool _isStarted;
 
-        private const string SEPARATOR = "──────────────────────────────────────────────";
+        private static readonly string[] Categories = { "GAME", "INFO", "WARN", "ERROR" };
 
         /// <summary>
         /// 외부 로그 수신용 이벤트 (Unity Debug.Log 등).
-        /// 포맷: logString, stackTrace, LogType
         /// </summary>
         public event Action<string, string, string> OnExternalLog;
 
         /// <summary>
-        /// 로그 출력 이벤트 (실시간 UI 표시 등에 사용).
+        /// 로그 출력 이벤트 (실시간 UI 표시 등).
         /// </summary>
-        public event Action<string> OnLogLine;
+        public event Action<string, string> OnLogLine; // message, category
 
         /// <summary>
-        /// 현재까지의 로그 전체 내용.
+        /// 특정 카테고리의 전체 로그 내용.
         /// </summary>
-        public string FullLog => _logBuffer.ToString();
-
-        public GameplayLogger(string filePath, bool includeTimestamp = true)
+        public string GetLog(string category)
         {
-            _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
-            _includeTimestamp = includeTimestamp;
-
-            // 디렉토리 없으면 생성
-            string dir = Path.GetDirectoryName(filePath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
+            return _buffers.TryGetValue(category, out var sb) ? sb.ToString() : "";
         }
 
-        /// <summary>
-        /// 게임 상태 머신 연결 (로거 활성화).
-        /// </summary>
+        public GameplayLogger(string logDirectory, bool includeTimestamp = true)
+        {
+            _logDirectory = logDirectory ?? throw new ArgumentNullException(nameof(logDirectory));
+            _includeTimestamp = includeTimestamp;
+
+            if (!Directory.Exists(logDirectory))
+                Directory.CreateDirectory(logDirectory);
+        }
+
         public void SubscribeToGameEvents(IGameStateMachine stateMachine)
         {
             _stateMachine = stateMachine ?? throw new ArgumentNullException(nameof(stateMachine));
@@ -62,9 +59,6 @@ namespace BlockPuzzle.Core.Utilities
             _stateMachine.OnGameOver += OnGameOver;
         }
 
-        /// <summary>
-        /// 게임 상태 머신 연결 해제.
-        /// </summary>
         public void UnsubscribeFromGameEvents()
         {
             if (_stateMachine == null) return;
@@ -78,121 +72,145 @@ namespace BlockPuzzle.Core.Utilities
             _stateMachine = null;
         }
 
+        // ───── 게임 이벤트 → GAME 카테고리 ─────
+
         private void OnStateChanged(GameState state)
         {
             switch (state)
             {
                 case GameState.Playing:
                     StartNewSession();
-                    AppendLog("[Game] Game Started");
+                    AppendGameLog("## Game Started\n");
                     break;
 
                 case GameState.GameOver:
-                    AppendLog("[Game] Game Over");
+                    AppendGameLog("## Game Over\n");
                     FlushToFile();
                     break;
 
                 case GameState.MainMenu:
-                    AppendLog("[Game] Returned to Main Menu");
+                    AppendGameLog("## Returned to Main Menu\n");
                     break;
             }
         }
 
         private void OnScoreChanged(ScoreBreakdown score)
         {
-            AppendLog($"[Score] +{score.TotalScore} ({score.BlockCount}blk ×{score.Multiplier:F1} + fall {score.FallBonus})");
+            AppendGameLog(
+                $"### Score +{score.TotalScore}\n" +
+                $"- Blocks: {score.BlockCount}\n" +
+                $"- Multiplier: {score.Multiplier:F1}\n" +
+                $"- Fall Bonus: {score.FallBonus}\n");
         }
 
         private void OnBlocksRemoved(IReadOnlyList<IBlock> blocks)
         {
-            AppendLog($"[Clear] {blocks.Count} blocks removed");
+            AppendGameLog($"### Clear: {blocks.Count} blocks removed\n");
         }
 
         private void OnRowAdded()
         {
-            AppendLog("[Turn] New row added at bottom");
+            AppendGameLog("### New row added (bottom)\n");
         }
 
         private void OnGameOver(GameOverData data)
         {
-            AppendLog($"[GameOver] Score:{data.FinalScore} MaxCombo:{data.MaxCombo} Cleared:{data.TotalClearedBlocks} Diff:{data.Difficulty}");
+            AppendGameLog(
+                $"### Game Over\n" +
+                $"- Final Score: {data.FinalScore}\n" +
+                $"- Max Combo: {data.MaxCombo}\n" +
+                $"- Total Cleared: {data.TotalClearedBlocks}\n" +
+                $"- Difficulty: {data.Difficulty}\n");
         }
 
-        /// <summary>
-        /// 새 게임 세션 시작 — 이전 로그 초기화.
-        /// </summary>
+        // ───── 세션 관리 ─────
+
         public void StartNewSession()
         {
-            _logBuffer.Clear();
-            AppendHeader();
-            AppendTimestamp($"Session started: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-            _logBuffer.AppendLine(SEPARATOR);
             _isStarted = true;
 
-            // 파일 덮어쓰기 (초기화)
-            TryWriteToFile(_logBuffer.ToString());
+            foreach (string cat in Categories)
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine($"# {cat} Log");
+                sb.AppendLine();
+                sb.AppendLine($"Session: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                sb.AppendLine("---");
+                sb.AppendLine();
+                _buffers[cat] = sb;
+            }
         }
 
-        /// <summary>
-        /// 외부 로그 메시지 추가 (Unity Debug.Log 등에서 호출).
-        /// </summary>
+        // ───── 로그 추가 ─────
+
         public void LogExternal(string logString, string stackTrace, string logType)
         {
-            AppendLog($"[{logType}] {logString}");
+            string category = logType switch
+            {
+                "Warning" => "WARN",
+                "Error" or "Exception" => "ERROR",
+                _ => "INFO"
+            };
+
+            string entry = FormatEntry(logString);
+            AppendToCategory(category, entry);
 
             if (logType == "Error" || logType == "Exception")
             {
-                AppendLog($"  └─ {stackTrace}");
+                AppendToCategory(category, $"> {stackTrace.Replace("\n", "\n> ")}\n");
             }
 
             OnExternalLog?.Invoke(logString, stackTrace, logType);
         }
 
-        /// <summary>
-        /// 직접 로그 메시지 추가.
-        /// </summary>
-        public void AppendLog(string message)
+        public void AppendToCategory(string category, string markdownContent)
         {
             if (!_isStarted) return;
+            if (!_buffers.ContainsKey(category)) return;
 
-            string entry = _includeTimestamp
-                ? $"[{DateTime.Now:HH:mm:ss.fff}] {message}"
-                : message;
-
-            _logBuffer.AppendLine(entry);
-            OnLogLine?.Invoke(entry);
+            _buffers[category].AppendLine(markdownContent);
+            OnLogLine?.Invoke(markdownContent, category);
         }
 
-        /// <summary>
-        /// 버퍼를 파일에 저장.
-        /// </summary>
+        private void AppendGameLog(string markdownContent)
+        {
+            AppendToCategory("GAME", markdownContent);
+        }
+
+        private string FormatEntry(string message)
+        {
+            return _includeTimestamp
+                ? $"**{DateTime.Now:HH:mm:ss.fff}** {message}"
+                : message;
+        }
+
+        // ───── 파일 I/O ─────
+
         public void FlushToFile()
         {
-            if (_logBuffer.Length == 0) return;
-            TryWriteToFile(_logBuffer.ToString());
+            foreach (string cat in Categories)
+            {
+                if (_buffers.TryGetValue(cat, out var sb) && sb.Length > 0)
+                {
+                    string filePath = Path.Combine(_logDirectory, $"{cat}.md");
+                    TryWriteToFile(filePath, sb.ToString());
+                }
+            }
         }
 
-        private void AppendHeader()
-        {
-            _logBuffer.AppendLine("╔══════════════════════════════════════════╗");
-            _logBuffer.AppendLine("║        ChainCrush Gameplay Log           ║");
-            _logBuffer.AppendLine("╚══════════════════════════════════════════╝");
-        }
-
-        private void AppendTimestamp(string message)
-        {
-            _logBuffer.AppendLine(message);
-        }
-
-        private void TryWriteToFile(string content)
+        private void TryWriteToFile(string filePath, string content)
         {
             try
             {
-                File.WriteAllText(_filePath, content);
+                File.WriteAllText(filePath, content);
             }
             catch (Exception e)
             {
-                AppendLog($"[Logger] Failed to write: {e.Message}");
+                // Fallback: GAME 버퍼에 에러 기록
+                if (_buffers.TryGetValue("GAME", out var sb))
+                {
+                    sb.AppendLine($"> Logger file write failed: {e.Message}");
+                }
             }
         }
     }
