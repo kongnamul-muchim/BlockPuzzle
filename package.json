@@ -1,0 +1,19 @@
+{
+  "name": "chaincrush-leaderboard",
+  "version": "1.0.0",
+  "description": "ChainCrush leaderboard API (Vercel Serverless)",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "tsc",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.0.0",
+    "vercel": "^41.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "prisma": "^6.0.0",
+    "typescript": "^5.7.0"
+  }
+}

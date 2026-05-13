@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model LeaderboardEntry {
+  id           String   @id @default(cuid())
+  playerName   String
+  score        Int
+  maxCombo     Int
+  totalCleared Int
+  difficulty   String
+  gameDuration Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([score])
+  @@index([difficulty])
+  @@index([createdAt])
+}
