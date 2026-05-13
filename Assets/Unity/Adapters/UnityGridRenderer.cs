@@ -171,7 +171,8 @@ namespace BlockPuzzle.Unity.Adapters
 
         private void OnGravityApplied(RemovalResult result)
         {
-            SyncAllBlockPositions();
+            // 중력 후 위치는 OnColumnsShifted에서 최종 재구축
+            // 여기서 rebuild하면 불필요한 2중 호출 발생
         }
 
         private void OnColumnsShifted()

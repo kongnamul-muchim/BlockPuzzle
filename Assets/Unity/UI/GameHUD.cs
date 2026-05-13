@@ -133,7 +133,8 @@ namespace BlockPuzzle.Unity.UI
             if (_removalCountText != null && _grid != null)
             {
                 int current = _grid.RemovalCount;
-                _removalCountText.text = string.Format(_removalFormat, MAX_REMOVALS - current, MAX_REMOVALS);
+                int remaining = Mathf.Max(0, MAX_REMOVALS - current);
+                _removalCountText.text = string.Format(_removalFormat, remaining, MAX_REMOVALS);
             }
         }
 
