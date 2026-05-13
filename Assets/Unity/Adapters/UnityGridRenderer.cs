@@ -79,6 +79,10 @@ namespace BlockPuzzle.Unity.Adapters
 
         private void OnGameStateChanged(GameState state)
         {
+            // 상태 전환 시 보류 중인 애니메이션 플래그 리셋
+            _hasPendingFallAnimations = false;
+            _activeFallAnimations = 0;
+
             switch (state)
             {
                 case GameState.Playing:
@@ -169,25 +173,64 @@ namespace BlockPuzzle.Unity.Adapters
             }
         }
 
+        private int _activeFallAnimations;
+        private bool _hasPendingFallAnimations;
+
         private void OnGravityApplied(RemovalResult result)
         {
-            // 중력 후 위치는 OnColumnsShifted에서 최종 재구축
-            // 여기서 rebuild하면 불필요한 2중 호출 발생
+            if (result.FallDistances.Count == 0)
+                return;
+
+            _hasPendingFallAnimations = true;
+            _activeFallAnimations = 0;
+
+            // Grid.ApplyGravity()에서 블럭 위치는 변경되었지만,
+            // renderer 참조 배열(_blockRenderers)은 아직 업데이트되지 않음.
+            // 따라서 모든 renderer를 순회하며 블럭 참조로 FallDistances 매칭
+            foreach (var renderer in _blockRenderers)
+            {
+                if (renderer == null) continue;
+
+                IBlock block = renderer.BlockData;
+                if (block != null && result.FallDistances.TryGetValue(block, out int fallDistance))
+                {
+                    _activeFallAnimations++;
+                    renderer.PlayFallAnimation(fallDistance, OnFallAnimationComplete);
+                }
+            }
+
+            // 매칭된 애니메이션이 하나도 없으면 플래그 해제
+            if (_activeFallAnimations <= 0)
+                _hasPendingFallAnimations = false;
+        }
+
+        private void OnFallAnimationComplete()
+        {
+            _activeFallAnimations--;
+
+            if (_activeFallAnimations <= 0)
+            {
+                _hasPendingFallAnimations = false;
+                RebuildAllBlocks(); // 최종 위치 싱크
+            }
         }
 
         private void OnColumnsShifted()
         {
+            // 낙하 애니메이션 진행 중이면 RebuildAllBlocks를 건너뜀
+            // (애니메이션 완료 후 OnFallAnimationComplete에서 처리)
+            if (_hasPendingFallAnimations)
+                return;
+
             RebuildAllBlocks();
         }
 
         private void OnRowAdded()
         {
-            RebuildAllBlocks();
-        }
+            // 낙하 애니메이션 진행 중이면 재구축하지 않음
+            if (_hasPendingFallAnimations)
+                return;
 
-        private void SyncAllBlockPositions()
-        {
-            ClearAllBlocks();
             RebuildAllBlocks();
         }
 

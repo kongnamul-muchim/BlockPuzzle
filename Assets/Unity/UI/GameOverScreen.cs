@@ -141,7 +141,8 @@ namespace BlockPuzzle.Unity.UI
                 Score = data.FinalScore,
                 MaxCombo = data.MaxCombo,
                 TotalCleared = data.TotalClearedBlocks,
-                Difficulty = data.Difficulty.ToString()
+                Difficulty = data.Difficulty.ToString(),
+                GameDuration = data.GameDurationSeconds
             };
 
             _saveButton.interactable = false;

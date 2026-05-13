@@ -16,6 +16,7 @@ namespace BlockPuzzle.Core.Interfaces
         public int MaxCombo { get; set; }
         public int TotalClearedBlocks { get; set; }
         public Difficulty Difficulty { get; set; }
+        public int GameDurationSeconds { get; set; }
     }
 
     public interface IGameStateMachine

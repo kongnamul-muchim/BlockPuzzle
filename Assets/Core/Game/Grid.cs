@@ -19,6 +19,7 @@ namespace BlockPuzzle.Core.Game
         private readonly IBlock[,] _grid = new IBlock[GRID_ROWS, GRID_COLUMNS];
         private readonly IDifficultyConfig _config;
         private readonly Random _rng = new();
+        private bool _hasOverflowed;
 
         public Grid(IDifficultyConfig config)
         {
@@ -63,6 +64,7 @@ namespace BlockPuzzle.Core.Game
             }
 
             RemovalCount = 0;
+            _hasOverflowed = false;
         }
 
         /// <summary>
@@ -114,6 +116,9 @@ namespace BlockPuzzle.Core.Game
             }
 
             // 게임오버: 이동 전 row 0에 블럭이 있었다면 위로 밀려나서 게임오버
+            if (rowZeroHadBlocks)
+                _hasOverflowed = true;
+
             return rowZeroHadBlocks;
         }
 
@@ -285,6 +290,9 @@ namespace BlockPuzzle.Core.Game
             RemovalCount = 0;
         }
 
-
+        public bool HasOverflow()
+        {
+            return _hasOverflowed;
+        }
     }
 }

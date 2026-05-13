@@ -35,6 +35,7 @@ namespace BlockPuzzle.Unity.UI
 
         /// <summary>
         /// 메인 스레드에서 액션 실행을 예약.
+        /// 인스턴스가 없으면 자동 생성하여 안전하게 처리.
         /// </summary>
         public static void ExecuteOnMainThread(Action action)
         {
@@ -44,8 +45,11 @@ namespace BlockPuzzle.Unity.UI
             }
             else
             {
-                // 디스패처가 없으면 동기 폴백 (에디터에서만 안전)
-                action?.Invoke();
+                // 인스턴스가 없으면 자동 생성 (DontDestroyOnLoad)
+                var go = new GameObject("MainThreadDispatcher (Auto-created)");
+                _instance = go.AddComponent<MainThreadDispatcher>();
+                DontDestroyOnLoad(go);
+                _instance._actions.Enqueue(action);
             }
         }
 

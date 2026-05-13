@@ -153,6 +153,7 @@ namespace BlockPuzzle.Unity.Adapters
 
         /// <summary>
         /// Dictionary를 JSON으로 직렬화하기 위한 래퍼.
+        /// .NET Standard 2.0 호환성을 위해 TryGetValue 사용.
         /// </summary>
         [Serializable]
         private class PostDataWrapper
@@ -166,12 +167,12 @@ namespace BlockPuzzle.Unity.Adapters
 
             public PostDataWrapper(Dictionary<string, object> data)
             {
-                playerName = data.GetValueOrDefault("playerName", "") as string;
-                score = Convert.ToInt32(data.GetValueOrDefault("score", 0));
-                maxCombo = Convert.ToInt32(data.GetValueOrDefault("maxCombo", 0));
-                totalCleared = Convert.ToInt32(data.GetValueOrDefault("totalCleared", 0));
-                difficulty = data.GetValueOrDefault("difficulty", "Easy") as string;
-                gameDuration = Convert.ToInt32(data.GetValueOrDefault("gameDuration", 0));
+                playerName = data.TryGetValue("playerName", out var pn) && pn is string pns ? pns : "";
+                score = data.TryGetValue("score", out var sc) ? Convert.ToInt32(sc) : 0;
+                maxCombo = data.TryGetValue("maxCombo", out var mc) ? Convert.ToInt32(mc) : 0;
+                totalCleared = data.TryGetValue("totalCleared", out var tc) ? Convert.ToInt32(tc) : 0;
+                difficulty = data.TryGetValue("difficulty", out var df) && df is string dfs ? dfs : "Easy";
+                gameDuration = data.TryGetValue("gameDuration", out var gd) ? Convert.ToInt32(gd) : 0;
             }
         }
     }

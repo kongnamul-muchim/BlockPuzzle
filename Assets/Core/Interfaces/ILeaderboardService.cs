@@ -16,6 +16,7 @@ namespace BlockPuzzle.Core.Interfaces
         public string Difficulty { get; set; }
         public DateTime CreatedAt { get; set; }
         public int? Rank { get; set; }
+        public int GameDuration { get; set; }
     }
 
     public interface ILeaderboardService

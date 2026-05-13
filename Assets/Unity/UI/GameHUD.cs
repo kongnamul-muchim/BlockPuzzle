@@ -24,6 +24,7 @@ namespace BlockPuzzle.Unity.UI
         private IScoreManager _scoreManager;
         private IDifficultyConfig _config;
         private IGrid _grid;
+        private int _lastComboCount; // 현재 콤보 (직전 제거 블럭 수)
 
         private const int MAX_REMOVALS = 3;
 
@@ -96,6 +97,7 @@ namespace BlockPuzzle.Unity.UI
         private void OnScoreChanged(ScoreBreakdown score)
         {
             UpdateScore();
+            _lastComboCount = score.BlockCount; // 현재 콤보 업데이트
             UpdateCombo();
         }
 
@@ -122,9 +124,10 @@ namespace BlockPuzzle.Unity.UI
 
         private void UpdateCombo()
         {
-            if (_comboText != null && _scoreManager != null)
+            if (_comboText != null)
             {
-                _comboText.text = string.Format(_comboFormat, _scoreManager.MaxCombo);
+                // 현재 콤보(직전 제거 블럭 수)를 표시
+                _comboText.text = string.Format(_comboFormat, _lastComboCount);
             }
         }
 

@@ -39,7 +39,34 @@ namespace BlockPuzzle.Unity.UI
             if (_closeButton != null)
                 _closeButton.onClick.AddListener(() => gameObject.SetActive(false));
 
+            // ToggleGroup 난이도 필터 연결
+            if (_difficultyFilter != null)
+            {
+                foreach (Toggle toggle in _difficultyFilter.GetComponentsInChildren<Toggle>(true))
+                {
+                    toggle.onValueChanged.AddListener((bool isOn) =>
+                    {
+                        if (isOn) RefreshLeaderboard();
+                    });
+                }
+            }
+
             gameObject.SetActive(false);
+        }
+
+        private string GetFilterFromToggleGroup()
+        {
+            if (_difficultyFilter == null) return null;
+
+            var activeToggle = _difficultyFilter.GetFirstActiveToggle();
+            if (activeToggle == null) return null;
+
+            // 토글 이름으로 난이도 식별 (예: "FilterAll", "FilterEasy", "FilterNormal", "FilterHard")
+            string toggleName = activeToggle.name;
+            if (toggleName.StartsWith("Filter"))
+                return toggleName.Replace("Filter", ""); // "All" → null, "Easy" → "Easy", etc.
+
+            return toggleName;
         }
 
         /// <summary>
@@ -68,16 +95,21 @@ namespace BlockPuzzle.Unity.UI
                 return;
             }
 
+            // ToggleGroup에서 활성화된 필터 읽기
+            string filter = GetFilterFromToggleGroup() ?? _currentFilter;
+            // "All"은 null로 변환 (전체 조회)
+            if (filter == "All") filter = null;
+
             SetStatus("Loading...");
 
-            _leaderboardService.GetLeaderboardAsync(_currentFilter).ContinueWith(task =>
+            _leaderboardService.GetLeaderboardAsync(filter).ContinueWith(task =>
             {
                 MainThreadDispatcher.ExecuteOnMainThread(() =>
                 {
                     if (task.IsCompletedSuccessfully && task.Result != null)
                     {
                         PopulateList(task.Result);
-                        SetStatus($"Showing {task.Result.Count} entries.");
+                        SetStatus($"Showing {task.Result.Count} entries{(filter != null ? $" ({filter})" : "")}.");
                     }
                     else
                     {

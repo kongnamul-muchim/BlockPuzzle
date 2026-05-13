@@ -13,6 +13,8 @@ namespace BlockPuzzle.Core.Game
 
         public GameState CurrentState { get; private set; } = GameState.MainMenu;
 
+        private System.DateTime _gameStartTime;
+
         public event Action<GameState> OnStateChanged;
         public event Action<ScoreBreakdown> OnScoreChanged;
         public event Action<IReadOnlyList<IBlock>> OnBlocksRemoved;
@@ -34,6 +36,15 @@ namespace BlockPuzzle.Core.Game
             _config.CurrentDifficulty = difficulty;
             _scoreManager.Reset();
             _grid.Initialize();
+
+            // 안전장치: Initialize 후에도 overflow 상태면 즉시 게임오버
+            if (_grid.HasOverflow())
+            {
+                TriggerGameOver();
+                return;
+            }
+
+            _gameStartTime = System.DateTime.Now;
             SetState(GameState.Playing);
         }
 
@@ -106,7 +117,8 @@ namespace BlockPuzzle.Core.Game
                 FinalScore = _scoreManager.CurrentScore,
                 MaxCombo = _scoreManager.MaxCombo,
                 TotalClearedBlocks = _scoreManager.TotalClearedBlocks,
-                Difficulty = _config.CurrentDifficulty
+                Difficulty = _config.CurrentDifficulty,
+                GameDurationSeconds = (int)(System.DateTime.Now - _gameStartTime).TotalSeconds
             };
         }
 

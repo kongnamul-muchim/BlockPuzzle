@@ -48,5 +48,8 @@ namespace BlockPuzzle.Core.Interfaces
 
         /// <summary>초기 블럭 배치 (게임 시작 시 일부 채움)</summary>
         void Initialize();
+
+        /// <summary>블럭이 격자 상단(1행 위)으로 넘어갔는지 확인 (게임오버 조건)</summary>
+        bool HasOverflow();
     }
 }
