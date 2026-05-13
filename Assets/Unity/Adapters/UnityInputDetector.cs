@@ -50,6 +50,15 @@ namespace BlockPuzzle.Unity.Adapters
         private void Start()
         {
             GameManager.RegisterInputProvider(this);
+
+            // GameManager.Awake가 InputDetector.Awake보다 늦게 실행된 경우
+            // 여기서 다시 시도 (Start는 모든 Awake 이후에 실행됨)
+            if (_stateMachine == null && GameManager.Container != null)
+            {
+                _stateMachine = GameManager.Container.Resolve<IGameStateMachine>();
+                _stateMachine.OnStateChanged += OnGameStateChanged;
+                _enabled = (_stateMachine.CurrentState == GameState.Playing);
+            }
         }
 
         private void OnDestroy()
