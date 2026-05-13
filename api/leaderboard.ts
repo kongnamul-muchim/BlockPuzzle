@@ -23,6 +23,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // POST body 파싱 (Vercel 환경에 따라 자동 파싱 안 될 수 있음)
+    if (req.method === 'POST' && typeof req.body === 'string') {
+      req.body = JSON.parse(req.body);
+    }
+
     switch (req.method) {
       case 'GET':
         return await handleGet(req, res);
