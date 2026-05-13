@@ -46,6 +46,18 @@ namespace BlockPuzzle.Unity.UI
                 _stateMachine.OnGameOver += OnGameOver;
             }
 
+            // 씬 전환 후 로드: 이미 GameOver 상태면 바로 표시
+            if (_stateMachine != null && _stateMachine.CurrentState == GameState.GameOver)
+            {
+                SetActive(true);
+                var data = _stateMachine.GetGameOverData();
+                if (data != null) UpdateStats(data);
+            }
+            else
+            {
+                SetActive(false);
+            }
+
             // 버튼 이벤트
             if (_saveButton != null)
                 _saveButton.onClick.AddListener(OnSaveClicked);

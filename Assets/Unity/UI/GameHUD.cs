@@ -48,7 +48,16 @@ namespace BlockPuzzle.Unity.UI
                 _stateMachine.OnRowAdded += OnRowAdded;
             }
 
-            SetActive(false);
+            // 씬 전환 후 로드: 이미 Playing 상태면 바로 활성화
+            if (_stateMachine != null && _stateMachine.CurrentState == GameState.Playing)
+            {
+                SetActive(true);
+                UpdateAll();
+            }
+            else
+            {
+                SetActive(false);
+            }
         }
 
         private void OnDestroy()

@@ -45,6 +45,12 @@ namespace BlockPuzzle.Unity.Adapters
 
             // 이벤트 구독
             SubscribeToEvents();
+
+            // 씬 전환 후 로드: 이미 Playing 상태면 바로 렌더링
+            if (_stateMachine.CurrentState == GameState.Playing)
+            {
+                RebuildAllBlocks();
+            }
         }
 
         private void SubscribeToEvents()

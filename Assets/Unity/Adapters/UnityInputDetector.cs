@@ -8,6 +8,7 @@ namespace BlockPuzzle.Unity.Adapters
     /// <summary>
     /// 마우스/터치 입력을 감지하여 Core에 전달.
     /// IInputProvider 구현체.
+    /// 게임 상태에 따라 자동 활성화/비활성화.
     /// </summary>
     public class UnityInputDetector : MonoBehaviour, IInputProvider
     {
@@ -17,6 +18,7 @@ namespace BlockPuzzle.Unity.Adapters
         private Camera _mainCamera;
         private bool _enabled;
         private bool _isMobile;
+        private IGameStateMachine _stateMachine;
 
         public event Action<int, int> OnBlockClicked;
 
@@ -28,12 +30,33 @@ namespace BlockPuzzle.Unity.Adapters
 
             if (_gridRenderer == null)
                 _gridRenderer = FindAnyObjectByType<UnityGridRenderer>();
+
+            // 상태 머신 구독 (Playing일 때만 입력 활성화)
+            if (GameManager.Container != null)
+            {
+                _stateMachine = GameManager.Container.Resolve<IGameStateMachine>();
+                _stateMachine.OnStateChanged += OnGameStateChanged;
+
+                // 씬 전환 후 로드: 이미 Playing이면 바로 활성화
+                if (_stateMachine.CurrentState == GameState.Playing)
+                    _enabled = true;
+            }
         }
 
         private void Start()
         {
-            // Start()에서 등록 (Awake 순서 문제 방지)
             GameManager.RegisterInputProvider(this);
+        }
+
+        private void OnDestroy()
+        {
+            if (_stateMachine != null)
+                _stateMachine.OnStateChanged -= OnGameStateChanged;
+        }
+
+        private void OnGameStateChanged(GameState state)
+        {
+            _enabled = (state == GameState.Playing);
         }
 
         private void Update()
@@ -42,7 +65,6 @@ namespace BlockPuzzle.Unity.Adapters
 
             if (_isMobile)
             {
-                // 모바일: 터치만 처리
                 if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
                 {
                     HandleClick(Input.GetTouch(0).position);
@@ -50,7 +72,6 @@ namespace BlockPuzzle.Unity.Adapters
             }
             else
             {
-                // PC/에디터: 마우스만 처리
                 if (Input.GetMouseButtonDown(0))
                 {
                     HandleClick(Input.mousePosition);
@@ -62,15 +83,13 @@ namespace BlockPuzzle.Unity.Adapters
         {
             Vector3 worldPos = _mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 0));
 
-            // GridRenderer를 통해 격자 좌표 변환
             if (_gridRenderer != null)
             {
                 Vector2Int gridPos = _gridRenderer.WorldToGridPosition(worldPos);
 
-                // 유효 범위 확인
                 if (gridPos.x >= 0 && gridPos.x < 10 && gridPos.y >= 0 && gridPos.y < 10)
                 {
-                    OnBlockClicked?.Invoke(gridPos.y, gridPos.x); // (row, column)
+                    OnBlockClicked?.Invoke(gridPos.y, gridPos.x);
                 }
             }
         }
