@@ -49,7 +49,7 @@ namespace BlockPuzzle.Unity.Adapters
             // Unity Debug.Log 캡처
             Application.logMessageReceived += OnUnityLog;
 
-            AppendToCategory("GAME", "### Logger initialized\n");
+            _coreLogger.AppendToCategory("GAME", "### Logger initialized\n");
         }
 
         private void OnDestroy()

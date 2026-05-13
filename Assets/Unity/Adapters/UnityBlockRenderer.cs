@@ -12,7 +12,6 @@ namespace BlockPuzzle.Unity.Adapters
     public class UnityBlockRenderer : MonoBehaviour
     {
         [Header("Animation Settings")]
-        [SerializeField] private float _fallDuration = 0.15f;
         [SerializeField] private float _removeDuration = 0.2f;
         [SerializeField] private float _selectedScale = 1.1f;
 

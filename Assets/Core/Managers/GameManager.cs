@@ -11,8 +11,6 @@ namespace BlockPuzzle.Core.Managers
     /// </summary>
     public class GameManager : MonoBehaviour
     {
-        [SerializeField] private Difficulty _startDifficulty = Difficulty.Easy;
-
         private static IDIContainer _container;
         private static IGameStateMachine _stateMachine;
 
