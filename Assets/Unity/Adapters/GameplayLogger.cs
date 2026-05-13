@@ -34,6 +34,13 @@ namespace BlockPuzzle.Unity.Adapters
             {
                 var stateMachine = GameManager.Container.Resolve<IGameStateMachine>();
                 _coreLogger.SubscribeToGameEvents(stateMachine);
+
+                // ★ 씬 전환 후 로드된 경우: 이미 Playing 상태일 수 있음
+                if (stateMachine.CurrentState == GameState.Playing)
+                {
+                    _coreLogger.StartNewSession();
+                    _coreLogger.AppendLog("[Game] Scene loaded mid-game");
+                }
             }
 
             // Unity Debug.Log 캡처
