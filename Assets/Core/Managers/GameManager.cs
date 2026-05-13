@@ -13,6 +13,7 @@ namespace BlockPuzzle.Core.Managers
     {
         private static IDIContainer _container;
         private static IGameStateMachine _stateMachine;
+        private static bool _isOriginalInitialized;
 
         /// <summary>전역 DI 컨테이너</summary>
         public static IDIContainer Container => _container;
@@ -22,13 +23,14 @@ namespace BlockPuzzle.Core.Managers
 
         private void Awake()
         {
-            if (_container != null)
+            if (_isOriginalInitialized)
             {
                 Debug.LogWarning("GameManager already initialized. Destroying duplicate.");
                 Destroy(gameObject);
                 return;
             }
 
+            _isOriginalInitialized = true;
             DontDestroyOnLoad(gameObject);
             InitializeContainer();
         }
@@ -116,8 +118,10 @@ namespace BlockPuzzle.Core.Managers
 
         private void OnDestroy()
         {
-            if (_container != null)
+            // 중복 인스턴스가 아니라 진짜 원본일 때만 정리
+            if (_isOriginalInitialized)
             {
+                _isOriginalInitialized = false;
                 _container = null;
                 _stateMachine = null;
             }
