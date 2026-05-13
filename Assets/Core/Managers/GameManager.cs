@@ -13,7 +13,6 @@ namespace BlockPuzzle.Core.Managers
     {
         private static IDIContainer _container;
         private static IGameStateMachine _stateMachine;
-        [SerializeField] private bool _isOriginal;
 
         /// <summary>전역 DI 컨테이너</summary>
         public static IDIContainer Container => _container;
@@ -30,7 +29,6 @@ namespace BlockPuzzle.Core.Managers
                 return;
             }
 
-            _isOriginal = true;
             DontDestroyOnLoad(gameObject);
             InitializeContainer();
         }
@@ -118,12 +116,10 @@ namespace BlockPuzzle.Core.Managers
 
         private void OnDestroy()
         {
-            // 인스턴스 필드로 체크 → 원본만 정리, 중복은 무시
-            if (_isOriginal)
-            {
-                _container = null;
-                _stateMachine = null;
-            }
+            // 주의: static 필드는 여기서 절대 null로 만들지 않음.
+            // 중복 GameManager가 Destroy될 때 static 필드까지
+            // 같이 날아가는 걸 방지하기 위함.
+            // static 필드 정리는 애플리케이션 종료 시 자연스럽게 해제됨.
         }
     }
 }
