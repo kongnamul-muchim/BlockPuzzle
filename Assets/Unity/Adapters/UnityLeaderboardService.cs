@@ -15,11 +15,21 @@ namespace BlockPuzzle.Unity.Adapters
     public class UnityLeaderboardService : MonoBehaviour, ILeaderboardService
     {
         [Header("API Settings")]
-        [SerializeField] private string _apiBaseUrl = "https://your-app.vercel.app/api";
+        [SerializeField] private string _apiBaseUrl = "https://chaincrush-leaderboard.vercel.app/api";
         [SerializeField] private float _timeoutSeconds = 10f;
+
+        private static UnityLeaderboardService _instance;
 
         private void Awake()
         {
+            if (_instance != null)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
             GameManager.RegisterLeaderboardService(this);
         }
 
@@ -65,7 +75,7 @@ namespace BlockPuzzle.Unity.Adapters
                 ["maxCombo"] = entry.MaxCombo,
                 ["totalCleared"] = entry.TotalCleared,
                 ["difficulty"] = entry.Difficulty,
-                ["gameDuration"] = 0
+                ["gameDuration"] = entry.GameDuration
             };
 
             string jsonPayload = JsonUtility.ToJson(new PostDataWrapper(postData));
