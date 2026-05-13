@@ -118,10 +118,7 @@ namespace BlockPuzzle.Unity.Adapters
             renderer.name = $"Block_{block.Row}_{block.Column}_{block.Color}";
 
             Color tint = UnityBlockRenderer.GetColorForBlockColor(block.Color);
-            renderer.Initialize(block, _blockSprite, tint);
-
-            Vector3 worldPos = GridToWorldPosition(block.Row, block.Column);
-            renderer.transform.localPosition = worldPos;
+            renderer.Initialize(block, _blockSprite, tint, _gridOrigin, _cellSize);
             renderer.transform.localScale = Vector3.one;
 
             _blockRenderers[block.Row, block.Column] = renderer;
