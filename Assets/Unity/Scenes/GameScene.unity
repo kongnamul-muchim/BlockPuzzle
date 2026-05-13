@@ -1913,8 +1913,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BlockPuzzle.Unity.Adapters.UnityGridRenderer
   _gridOrigin: {x: -4.5, y: 4.5}
   _cellSize: 1
-  _blockPrefab: {fileID: 0}
-  _blockSprite: {fileID: 0}
+  _blockPrefab: {fileID: 5997973355458608282, guid: 12d84b500cf42be4281cb8f09fd15ea3, type: 3}
+  _blockSprite: {fileID: 7482667652216324306, guid: 3387ce5cdab9fb74390fb43ce51de50f, type: 3}
 --- !u!4 &1288127427
 Transform:
   m_ObjectHideFlags: 0
@@ -2038,7 +2038,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec68c67eca8214d44ad8f2ce28d12205, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlockPuzzle.Core.Managers.GameManager
-  _startDifficulty: 0
 --- !u!4 &1840873530
 Transform:
   m_ObjectHideFlags: 0
@@ -2321,9 +2320,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlockPuzzle.Unity.Adapters.UnityInputDetector
   _gridRenderer: {fileID: 1288127426}
-  _blockLayer:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!4 &2020681655
 Transform:
   m_ObjectHideFlags: 0

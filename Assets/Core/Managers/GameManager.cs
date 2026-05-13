@@ -76,7 +76,15 @@ namespace BlockPuzzle.Core.Managers
             // 입력 이벤트를 StateMachine에 연결
             inputProvider.OnBlockClicked += (row, col) =>
             {
-                _stateMachine?.ProcessClick(row, col);
+                if (_stateMachine != null)
+                {
+                    Debug.Log($"[GameManager] Click relayed: ({row}, {col})");
+                    _stateMachine.ProcessClick(row, col);
+                }
+                else
+                {
+                    Debug.LogWarning("[GameManager] Click ignored: StateMachine is null");
+                }
             };
         }
 

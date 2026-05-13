@@ -89,11 +89,16 @@ namespace BlockPuzzle.Unity.Adapters
         private void HandleMouse()
         {
             var mouse = Mouse.current;
-            if (mouse == null) return;
+            if (mouse == null)
+            {
+                Debug.Log("[Input] Mouse.current is NULL");
+                return;
+            }
 
             if (mouse.leftButton.wasPressedThisFrame)
             {
                 Vector2 screenPos = mouse.position.ReadValue();
+                Debug.Log($"[Input] Mouse clicked at screen ({screenPos.x:F0}, {screenPos.y:F0})");
                 HandleClick(screenPos);
             }
         }
@@ -113,15 +118,26 @@ namespace BlockPuzzle.Unity.Adapters
         private void HandleClick(Vector2 screenPos)
         {
             Vector3 worldPos = _mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 0));
+            Debug.Log($"[Input] Screen→World: ({worldPos.x:F2}, {worldPos.y:F2})");
 
             if (_gridRenderer != null)
             {
                 Vector2Int gridPos = _gridRenderer.WorldToGridPosition(worldPos);
+                Debug.Log($"[Input] Grid coord: ({gridPos.x}, {gridPos.y})");
 
                 if (gridPos.x >= 0 && gridPos.x < 10 && gridPos.y >= 0 && gridPos.y < 10)
                 {
+                    Debug.Log($"[Input] Firing OnBlockClicked(row={gridPos.y}, col={gridPos.x})");
                     OnBlockClicked?.Invoke(gridPos.y, gridPos.x);
                 }
+                else
+                {
+                    Debug.Log($"[Input] Grid coord out of bounds!");
+                }
+            }
+            else
+            {
+                Debug.Log("[Input] GridRenderer is NULL!");
             }
         }
 
