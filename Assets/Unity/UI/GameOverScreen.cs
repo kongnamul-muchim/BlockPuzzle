@@ -1,6 +1,7 @@
 using BlockPuzzle.Core.Interfaces;
 using BlockPuzzle.Core.Managers;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace BlockPuzzle.Unity.UI
@@ -166,14 +167,20 @@ namespace BlockPuzzle.Unity.UI
             });
         }
 
+        [Header("Scene Names")]
+        [SerializeField] private string _gameSceneName = "GameScene";
+        [SerializeField] private string _mainMenuSceneName = "MainMenuScene";
+
         private void OnRetryClicked()
         {
             _stateMachine?.RestartGame();
+            SceneManager.LoadScene(_gameSceneName);
         }
 
         private void OnMainMenuClicked()
         {
             _stateMachine?.GoToMainMenu();
+            SceneManager.LoadScene(_mainMenuSceneName);
         }
 
         private void SetActive(bool active)
