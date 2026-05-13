@@ -2,13 +2,15 @@ using System;
 using BlockPuzzle.Core.Interfaces;
 using BlockPuzzle.Core.Managers;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.EnhancedTouch;
 
 namespace BlockPuzzle.Unity.Adapters
 {
     /// <summary>
     /// 마우스/터치 입력을 감지하여 Core에 전달.
-    /// IInputProvider 구현체.
-    /// 게임 상태에 따라 자동 활성화/비활성화.
+    /// Input System 패키지 기반. IInputProvider 구현체.
     /// </summary>
     public class UnityInputDetector : MonoBehaviour, IInputProvider
     {
@@ -31,13 +33,15 @@ namespace BlockPuzzle.Unity.Adapters
             if (_gridRenderer == null)
                 _gridRenderer = FindAnyObjectByType<UnityGridRenderer>();
 
-            // 상태 머신 구독 (Playing일 때만 입력 활성화)
+            if (_isMobile)
+                EnhancedTouchSupport.Enable();
+
+            // 상태 머신 구독
             if (GameManager.Container != null)
             {
                 _stateMachine = GameManager.Container.Resolve<IGameStateMachine>();
                 _stateMachine.OnStateChanged += OnGameStateChanged;
 
-                // 씬 전환 후 로드: 이미 Playing이면 바로 활성화
                 if (_stateMachine.CurrentState == GameState.Playing)
                     _enabled = true;
             }
@@ -65,17 +69,35 @@ namespace BlockPuzzle.Unity.Adapters
 
             if (_isMobile)
             {
-                if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
-                {
-                    HandleClick(Input.GetTouch(0).position);
-                }
+                HandleTouch();
             }
             else
             {
-                if (Input.GetMouseButtonDown(0))
-                {
-                    HandleClick(Input.mousePosition);
-                }
+                HandleMouse();
+            }
+        }
+
+        private void HandleMouse()
+        {
+            var mouse = Mouse.current;
+            if (mouse == null) return;
+
+            if (mouse.leftButton.wasPressedThisFrame)
+            {
+                Vector2 screenPos = mouse.position.ReadValue();
+                HandleClick(screenPos);
+            }
+        }
+
+        private void HandleTouch()
+        {
+            var touchscreen = Touchscreen.current;
+            if (touchscreen == null) return;
+
+            if (touchscreen.primaryTouch.press.wasPressedThisFrame)
+            {
+                Vector2 screenPos = touchscreen.primaryTouch.position.ReadValue();
+                HandleClick(screenPos);
             }
         }
 
