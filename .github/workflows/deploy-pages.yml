@@ -1,0 +1,47 @@
+# ChainCrush WebGL → GitHub Pages 자동 배포
+# 
+# 사용법:
+# 1. Unity에서 Build Settings → WebGL → Build → 출력 폴더를 Builds/WebGL/ 로 설정
+# 2. 빌드 완료 후 git add, commit, push
+# 3. GitHub Pages 설정에서 Source를 "GitHub Actions"로 변경
+# 4. 푸시할 때마다 자동으로 https://kongnamul-muchim.github.io/BlockPuzzle/ 에 배포됨
+
+name: Deploy WebGL to Pages
+
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - "Builds/WebGL/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload WebGL Build
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'Builds/WebGL'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
