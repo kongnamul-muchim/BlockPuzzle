@@ -84,8 +84,8 @@ namespace BlockPuzzle.Core.Game
 
             var colorPool = _config.GetColorPool();
 
-            // 모든 블럭을 1행씩 위로 이동 (아래→위로 scan하여 덮어쓰기 방지)
-            for (int r = GRID_ROWS - 1; r >= 0; r--)
+            // 모든 블럭을 1행씩 위로 이동 (위→아래로 scan → 덮어쓰기 방지)
+            for (int r = 0; r < GRID_ROWS; r++)
             {
                 for (int c = 0; c < GRID_COLUMNS; c++)
                 {
