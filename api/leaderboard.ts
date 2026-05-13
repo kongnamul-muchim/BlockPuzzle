@@ -80,7 +80,17 @@ async function handleGet(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handlePost(req: VercelRequest, res: VercelResponse) {
-  const { playerName, score, maxCombo, totalCleared, difficulty } = req.body;
+  // body가 문자열인 경우 파싱
+  let data: Record<string, unknown>;
+  if (typeof req.body === 'string') {
+    data = JSON.parse(req.body);
+  } else if (req.body && typeof req.body === 'object') {
+    data = req.body as Record<string, unknown>;
+  } else {
+    return res.status(400).json({ error: 'Invalid request body' });
+  }
+
+  const { playerName, score, maxCombo, totalCleared, difficulty, gameDuration } = data;
 
   // 유효성 검사
   if (!playerName || typeof playerName !== 'string' || playerName.trim().length === 0) {
@@ -89,7 +99,7 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
   if (typeof score !== 'number' || score < 0) {
     return res.status(400).json({ error: 'Invalid score' });
   }
-  if (!difficulty || !['Easy', 'Normal', 'Hard'].includes(difficulty)) {
+  if (!difficulty || !['Easy', 'Normal', 'Hard'].includes(difficulty as string)) {
     return res.status(400).json({ error: 'Invalid difficulty' });
   }
 
@@ -97,10 +107,10 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
     data: {
       playerName: playerName.trim().slice(0, 20),
       score,
-      maxCombo: Math.max(0, maxCombo || 0),
-      totalCleared: Math.max(0, totalCleared || 0),
-      difficulty,
-      gameDuration: Math.max(0, req.body.gameDuration || 0),
+      maxCombo: Math.max(0, (maxCombo as number) || 0),
+      totalCleared: Math.max(0, (totalCleared as number) || 0),
+      difficulty: difficulty as string,
+      gameDuration: Math.max(0, (gameDuration as number) || 0),
     },
   });
 
