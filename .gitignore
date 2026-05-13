@@ -1,0 +1,31 @@
+# Unity
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# Visual Studio
+*.csproj
+*.sln
+*.slnx
+*.suo
+*.user
+*.userosscache
+*.userprefs
+.vs/
+.vscode/
+
+# JetBrains Rider
+.idea/
+*.sln.DotSettings
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+Server/node_modules/
+Server/.vercel
