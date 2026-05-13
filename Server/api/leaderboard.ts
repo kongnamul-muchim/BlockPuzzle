@@ -56,8 +56,8 @@ async function handleGet(req: VercelRequest, res: VercelResponse) {
     },
   });
 
-  // 순위 추가
-  const ranked = entries.map((entry, index) => ({
+  // 순위 추가 (명시적 타입 — strict 모드 대응)
+  const ranked = entries.map((entry: typeof entries[number], index: number) => ({
     ...entry,
     rank: index + 1,
   }));
