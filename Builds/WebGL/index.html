@@ -24,6 +24,20 @@
       </div>
     </div>
     <script>
+      // AudioContext 자동재생 정책 우회: 첫 클릭 시 모든 AudioContext 재개
+      var resumeAudioContext = function() {
+        try {
+          var ctx = new (window.AudioContext || window.webkitAudioContext)();
+          ctx.resume().then(function() { ctx.close(); }).catch(function() {});
+        } catch(e) {}
+        document.removeEventListener('click', resumeAudioContext);
+        document.removeEventListener('touchstart', resumeAudioContext);
+        document.removeEventListener('keydown', resumeAudioContext);
+      };
+      document.addEventListener('click', resumeAudioContext);
+      document.addEventListener('touchstart', resumeAudioContext);
+      document.addEventListener('keydown', resumeAudioContext);
+
       var canvas = document.querySelector("#unity-canvas");
 
       // Shows a temporary message banner/ribbon for a few seconds, or
