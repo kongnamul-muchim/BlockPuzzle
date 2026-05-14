@@ -70,5 +70,35 @@ namespace BlockPuzzle.Core.Game
         {
             return group != null && group.Count >= 2;
         }
+
+        public bool HasAnyValidMove()
+        {
+            for (int r = 0; r < _grid.Rows; r++)
+            {
+                for (int c = 0; c < _grid.Columns; c++)
+                {
+                    IBlock block = _grid.GetBlockAt(r, c);
+                    if (block == null || block.State == BlockState.Removed)
+                        continue;
+
+                    foreach (var (dr, dc) in Directions)
+                    {
+                        int nr = r + dr;
+                        int nc = c + dc;
+
+                        if (nr < 0 || nr >= _grid.Rows || nc < 0 || nc >= _grid.Columns)
+                            continue;
+
+                        IBlock neighbor = _grid.GetBlockAt(nr, nc);
+                        if (neighbor != null && neighbor.State != BlockState.Removed
+                            && neighbor.Color == block.Color)
+                        {
+                            return true; // 제거 가능한 그룹 발견
+                        }
+                    }
+                }
+            }
+            return false; // 교착 상태
+        }
     }
 }

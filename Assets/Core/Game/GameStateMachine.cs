@@ -86,18 +86,33 @@ namespace BlockPuzzle.Core.Game
             OnScoreChanged?.Invoke(score);
 
             // 7. 턴 시스템: 일정 횟수 제거마다 새 행 추가
+            bool turnAdvanced = false;
             if (_grid.RemovalCount >= Grid.TURN_RESET_THRESHOLD)
             {
                 _grid.ResetRemovalCount();
-                bool isGameOver = _grid.AddRowAtBottom();
-                OnRowAdded?.Invoke();
-
-                if (isGameOver)
-                {
-                    TriggerGameOver();
-                    return;
-                }
+                turnAdvanced = DoAddRowAtBottom();
+                if (CurrentState != GameState.Playing) return;
             }
+
+            // 8. 교착 상태(Deadlock) 감지: 제거 가능한 블럭이 없으면 강제 턴 진행
+            if (CurrentState == GameState.Playing && !_chainDetector.HasAnyValidMove())
+            {
+                // 강제로 턴 카운트 초기화 후 새 행 추가
+                _grid.ResetRemovalCount();
+                DoAddRowAtBottom();
+            }
+        }
+
+        private bool DoAddRowAtBottom()
+        {
+            bool isGameOver = _grid.AddRowAtBottom();
+            OnRowAdded?.Invoke();
+            if (isGameOver)
+            {
+                TriggerGameOver();
+                return true;
+            }
+            return false;
         }
 
         public void GoToMainMenu()
